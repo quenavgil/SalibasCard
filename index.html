@@ -160,6 +160,7 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
   .grid2{grid-template-columns:1fr;}
   .stats-row{grid-template-columns:1fr 1fr;}
   .td-resp{display:none;}
+  .td-paid{display:none;}
   .split-row{flex-direction:column;}
   .owed-right{gap:10px;}
 }
@@ -365,9 +366,10 @@ function renderTxTable(txns, title) {
     ${legend}
     <table class="tx-table">
       <thead><tr>
-        <th>Date</th><th>Merchant</th><th>Category</th>
-        <th style="text-align:center">Who Pays</th>
-        <th style="text-align:center">Paid Back?</th>
+        <th>Date</th>
+        <th>Merchant</th>
+        <th class="td-resp" style="text-align:center">Who Pays</th>
+        <th class="td-paid" style="text-align:center">Paid Back?</th>
         <th style="text-align:right">Amount</th>
       </tr></thead>
       <tbody>${rows}</tbody>
