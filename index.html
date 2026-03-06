@@ -158,21 +158,29 @@ body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-ser
 
 .td-cat{white-space:nowrap;}
 .td-merchant-sub{display:none;}
+
+/* MOBILE TX LIST */
+.mobile-tx-list{display:none;}
+.mobile-tx-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #1a2235;}
+.mobile-tx-row:last-child{border-bottom:none;}
+.mobile-tx-left{flex:1;min-width:0;}
+.mobile-tx-date{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--muted);margin-bottom:2px;}
+.mobile-tx-name{font-size:.78rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mobile-tx-badges{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;align-items:center;}
+.mobile-tx-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.mobile-tx-amount{font-family:'IBM Plex Mono',monospace;font-size:.85rem;font-weight:700;color:var(--accent);}
+.mobile-tx-amount.dad-amt{color:var(--muted);font-weight:500;}
+
 @media(max-width:768px){
   .grid2{grid-template-columns:1fr;}
   .stats-row{grid-template-columns:1fr 1fr;}
   .td-resp{display:none;}
   .td-paid{display:none;}
   .td-cat{display:none;}
-  .td-merchant-sub{display:flex;}
-  .tx-table thead{display:none;}
-  .tx-table td{display:block;padding:2px 0;border:none;}
-  .tx-table tr{display:block;padding:10px 12px;border-bottom:1px solid #1a2235;margin:0;}
-  .tx-table tbody tr:last-child{border-bottom:none;}
-  .td-date{color:var(--muted);font-size:.6rem;}
-  .td-merchant{font-size:.8rem;font-weight:600;padding:2px 0 4px 0 !important;}
-  .td-amount{text-align:left !important;font-size:.85rem;padding:4px 0 0 0 !important;}
-  .tx-table tbody tr:hover{background:transparent;}
+  .td-merchant-sub{display:none;}
+  .tx-table{display:none;}
+  .tx-legend{display:none;}
+  .mobile-tx-list{display:block;}
   .split-row{flex-direction:column;}
   .owed-right{gap:10px;}
 }
@@ -373,9 +381,33 @@ function renderTxTable(txns, title) {
       <td class="${amtClass}">${fmt(t.amount)}</td>
     </tr>`;
   }).join('');
+  // Mobile rows
+  const mobileRows = txns.map(t => {
+    const color = CAT_COLORS[t.category]||'#64748b', bg = CAT_BG[t.category]||'#1a1a1a';
+    const respBadge = t.yours ? `<span class="resp-badge resp-yours">YOURS</span>` : `<span class="resp-badge resp-dad">DAD</span>`;
+    const paidBadge = !t.yours ? `<span class="na-badge">—</span>` : t.paid ? `<span class="paid-badge paid-yes">PAID ✓</span>` : `<span class="paid-badge paid-no">OWES</span>`;
+    const amtClass = t.yours ? 'mobile-tx-amount' : 'mobile-tx-amount dad-amt';
+    const d = t.date.split('/');
+    const dateStr = `${MONTHS[parseInt(d[0])-1]} ${parseInt(d[1])}`;
+    return `<div class="mobile-tx-row">
+      <div class="mobile-tx-left">
+        <div class="mobile-tx-date">${dateStr}</div>
+        <div class="mobile-tx-name">${t.name}</div>
+        <div class="mobile-tx-badges">
+          <span class="cat-tag" style="background:${bg};color:${color}">${t.category}</span>
+          ${respBadge}
+          ${paidBadge}
+        </div>
+      </div>
+      <div class="mobile-tx-right">
+        <div class="${amtClass}">${fmt(t.amount)}</div>
+      </div>
+    </div>`;
+  }).join('');
+
   return `<div class="tx-card">
     <div class="card-title">${title}</div>
-    ${legend}
+    <div class="tx-legend">${legend}</div>
     <table class="tx-table">
       <thead><tr>
         <th>Date</th>
@@ -387,6 +419,7 @@ function renderTxTable(txns, title) {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
+    <div class="mobile-tx-list">${legend}${mobileRows}</div>
   </div>`;
 }
 
