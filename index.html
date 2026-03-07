@@ -510,7 +510,7 @@ function renderMonthView(year, month) {
         <div class="stat-sub">of ${fmt(stats.yoursTotal)}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Still Owes</div>
+        <div class="stat-label">Still Owed</div>
         <div class="stat-value" style="color:${stats.owes>0?'var(--orange)':'var(--green)'}">${fmt(Math.max(0,stats.owes))}</div>
         <div class="stat-sub">${stats.owes<=0?'All settled!':'to dad'}</div>
       </div>
@@ -611,7 +611,7 @@ function renderYearOverview(year) {
         <div class="stat-sub">of ${fmt(stats.yoursTotal)}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-label">Still Owes</div>
+        <div class="stat-label">Still Owed</div>
         <div class="stat-value" style="color:${stats.owes>0?'var(--orange)':'var(--green)'}">${fmt(Math.max(0,stats.owes))}</div>
         <div class="stat-sub">${stats.owes<=0?'All clear!':'remaining'}</div>
       </div>
