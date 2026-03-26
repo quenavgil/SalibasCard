@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saliba · Card Report</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f7f7f7;--card:#ffffff;--card2:#f2f2f2;--border:#e5e5e5;--accent:#111111;--blue:#111111;--red:#111111;--green:#111111;--purple:#111111;--orange:#111111;--teal:#111111;--text:#111111;--muted:#888888;--muted2:#aaaaaa;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.5;padding:28px 16px 80px;}
+.page{max-width:900px;margin:0 auto;}
+
+/* HEADER */
+.header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px;}
+.header h1{font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600;color:#111111;letter-spacing:-.2px;}
+.header p{font-size:.7rem;color:var(--muted);margin-top:3px;font-weight:300;}
+.card-pill{font-family:'IBM Plex Mono',monospace;font-size:.65rem;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:5px;padding:5px 10px;letter-spacing:1px;}
+.card-pill span{color:#111;font-weight:600;}
+
+/* YEAR TABS */
+.year-nav{display:flex;align-items:center;gap:8px;margin-bottom:20px;}
+.year-nav .label{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-right:4px;}
+.ytab{font-family:'IBM Plex Mono',monospace;font-size:.75rem;font-weight:600;padding:6px 18px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.ytab.active{background:#111;color:#fff;border-color:#111;}
+.ytab:hover:not(.active){border-color:var(--muted2);color:var(--text);}
+
+/* MONTH NAV */
+.month-nav{display:flex;gap:5px;margin-bottom:20px;flex-wrap:wrap;}
+.mtab{font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:500;padding:4px 12px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.3px;}
+.mtab.active{background:var(--card2);color:var(--text);border-color:var(--muted2);}
+.mtab.has-data{color:var(--text);}
+.mtab.active.has-data{background:#111;color:#fff;border-color:#111;}
+.mtab:hover:not(.active){border-color:var(--muted2);color:var(--text);}
+.mtab.no-data{opacity:.3;cursor:default;}
+
+/* OWED BANNER */
+.owed-banner{background:#ffffff;border:1px solid #e5e5e5;border-radius:8px;padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.owed-left{display:flex;align-items:center;gap:10px;}
+.owed-icon{font-size:1.1rem;}
+.owed-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
+.owed-amount{font-family:'IBM Plex Mono',monospace;font-size:1.4rem;font-weight:600;color:#2563eb;line-height:1;margin-top:2px;}
+.owed-right{display:flex;gap:18px;flex-wrap:wrap;align-items:center;}
+.owed-stat{text-align:right;}
+.owed-stat-label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.owed-stat-val{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:600;margin-top:1px;}
+.status-pill{font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;padding:3px 9px;border-radius:99px;letter-spacing:.5px;white-space:nowrap;}
+.status-pill.unpaid{background:#fff;color:#111;border:1px solid #ddd;}
+.status-pill.paid-full{background:#fff;color:#111;border:1px solid #ddd;}
+.status-pill.partial{background:#f2f2f2;color:#555;border:1px solid #e5e5e5;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:11px 13px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.stat-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:500;}
+.stat-value{font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600;margin-top:3px;line-height:1;}
+.stat-sub{font-size:.6rem;color:var(--muted);margin-top:2px;}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:15px 16px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.card-title{font-family:'IBM Plex Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:#aaa;margin-bottom:12px;}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:14px;}
+.donut-legend{flex:1;}
+.legend-item{display:flex;align-items:center;gap:6px;margin-bottom:5px;}
+.legend-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.legend-name{font-size:.68rem;color:var(--muted);flex:1;}
+.legend-pct{font-family:'IBM Plex Mono',monospace;font-size:.68rem;font-weight:600;color:var(--text);}
+
+/* BAR */
+.bar-list{display:flex;flex-direction:column;gap:8px;}
+.bar-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+.bar-name{font-size:.7rem;color:var(--text);}
+.bar-right{display:flex;align-items:baseline;gap:6px;}
+.bar-amount{font-family:'IBM Plex Mono',monospace;font-size:.7rem;font-weight:600;color:var(--accent);}
+.bar-pct{font-size:.6rem;color:var(--muted);}
+.bar-track{background:var(--border);height:4px;border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.16,1,.3,1);}
+
+/* RESPONSIBILITY SPLIT */
+.split-card{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:15px 16px;margin-bottom:10px;}
+.split-row{display:flex;gap:10px;}
+.split-half{flex:1;background:var(--card2);border-radius:6px;padding:12px 14px;}
+.split-half-label{font-size:.6rem;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.split-half-amount{font-family:'IBM Plex Mono',monospace;font-size:1.1rem;font-weight:600;line-height:1;}
+.split-half-sub{font-size:.62rem;color:var(--muted);margin-top:3px;}
+.split-bar-wrap{margin-top:10px;}
+.split-bar-track{background:#eee;height:6px;border-radius:99px;overflow:hidden;display:flex;}
+.split-bar-his{height:100%;background:#333;transition:width .6s cubic-bezier(.16,1,.3,1);}
+.split-bar-dad{height:100%;background:#ddd;}
+
+/* TX TABLE */
+.tx-card{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:15px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.legend-key{display:flex;gap:12px;margin-bottom:8px;flex-wrap:wrap;align-items:center;}
+.legend-key-item{display:flex;align-items:center;gap:4px;font-size:.63rem;color:var(--muted);}
+.tx-table{width:100%;border-collapse:collapse;}
+.tx-table thead th{font-family:'IBM Plex Mono',monospace;font-size:.56rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);text-align:left;padding:0 7px 7px 7px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.tx-table tbody tr:hover{background:var(--card2);}
+.tx-table td{padding:5px 7px;font-size:.7rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+.tx-table tbody tr:last-child td{border-bottom:none;}
+.td-date{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);white-space:nowrap;}
+.td-merchant{font-weight:500;}
+.cat-tag{font-size:.58rem;padding:2px 6px;border-radius:3px;font-weight:500;letter-spacing:.3px;white-space:nowrap;}
+.td-resp,.td-paid{text-align:center;}
+.td-amount{font-family:'IBM Plex Mono',monospace;font-size:.72rem;font-weight:600;text-align:right;color:var(--red);}
+.td-amount.dad-amt{color:var(--muted);}
+.resp-badge{font-size:.56rem;padding:2px 6px;border-radius:3px;font-weight:600;white-space:nowrap;}
+.resp-yours{background:#f2f2f2;color:#333;border:1px solid #ddd;}
+.resp-dad{background:#f2f2f2;color:#333;border:1px solid #ddd;}
+.paid-badge{font-size:.56rem;padding:2px 6px;border-radius:3px;font-weight:600;}
+.paid-yes{background:#f2f2f2;color:#555;border:1px solid #bbf7d0;}
+.paid-no{background:#f2f2f2;color:#2563eb;border:1px solid #ddd;}
+.na-badge{font-size:.56rem;padding:2px 6px;border-radius:3px;font-weight:500;background:#f8fafc;color:var(--muted2);border:1px solid var(--border);}
+
+/* YEAR OVERVIEW */
+.year-overview{margin-bottom:10px;}
+.monthly-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:10px;}
+.month-tile{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:12px 13px;cursor:pointer;transition:all .15s;}
+.month-tile:hover{border-color:var(--muted2);}
+.month-tile.active-tile{border-color:#111;background:#f7f7f7;}
+.month-tile.no-data-tile{opacity:.35;cursor:default;}
+.tile-month{font-family:'IBM Plex Mono',monospace;font-size:.65rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.tile-amount{font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:600;color:var(--accent);margin-top:4px;line-height:1;}
+.tile-sub{font-size:.6rem;color:var(--muted);margin-top:2px;}
+.tile-badge{display:inline-block;font-size:.55rem;padding:1px 5px;border-radius:3px;margin-top:4px;font-weight:600;}
+.tile-paid{background:#f2f2f2;color:#555;}
+.tile-unpaid{background:#f2f2f2;color:#555;}
+.tile-partial{background:#f2f2f2;color:#555;}
+
+/* YEAR TOTALS */
+.year-totals{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:15px 16px;margin-bottom:10px;}
+
+
+/* SUMMARY CARD */
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:7px;padding:16px 18px;margin-bottom:10px;}
+.summary-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.summary-icon{font-size:1rem;}
+.summary-title{font-family:'IBM Plex Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);}
+.summary-items{display:flex;flex-direction:column;gap:8px;}
+.summary-item{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-radius:6px;background:var(--card2);}
+.summary-item-icon{font-size:.9rem;flex-shrink:0;margin-top:1px;}
+.summary-item-text{font-size:.72rem;line-height:1.5;color:var(--text);}
+.summary-item-text strong{color:#111;font-weight:700;}
+.summary-item-text .dad-note{color:#555;}
+.summary-item.warn{border-left:2px solid #ccc;}
+.summary-item.good{border-left:2px solid #ccc;}
+.summary-item.info{border-left:2px solid #ccc;}
+.summary-item.flag{border-left:2px solid #ccc;}
+
+/* EMPTY STATE */
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:.8rem;}
+
+/* SECTION TOGGLE */
+.section{display:none;}
+.section.visible{display:block;}
+
+
+
+@media(max-width:768px){
+  .grid2{grid-template-columns:1fr;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .split-row{flex-direction:column;}
+  .owed-right{gap:10px;}
+}
+
+/* TX ROW LIST */
+.tx-list{display:flex;flex-direction:column;}
+.tx-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;border-bottom:1px solid var(--border);}
+.tx-row:last-child{border-bottom:none;}
+.tx-row-left{flex:1;min-width:0;}
+.tx-row-date{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);margin-bottom:2px;}
+.tx-row-name{font-size:.78rem;font-weight:600;color:var(--text);margin-bottom:5px;}
+.tx-row-badges{display:flex;gap:5px;flex-wrap:wrap;align-items:center;}
+.tx-row-amount{font-family:'IBM Plex Mono',monospace;font-size:.88rem;font-weight:700;white-space:nowrap;flex-shrink:0;text-align:right;}
+
+
+/* TOTAL OWED BANNER */
+.total-owed-bar{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:12px 18px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.06);flex-wrap:wrap;gap:10px;}
+.total-owed-bar-left{display:flex;align-items:center;gap:10px;}
+.total-owed-bar-label{font-family:'IBM Plex Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;color:#aaa;}
+.total-owed-bar-amount{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:700;color:#2563eb;line-height:1;margin-top:3px;}
+.total-owed-bar-right{display:flex;gap:20px;flex-wrap:wrap;}
+.total-owed-stat{text-align:right;}
+.total-owed-stat-label{font-family:'IBM Plex Mono',monospace;font-size:.55rem;text-transform:uppercase;letter-spacing:.8px;color:#aaa;}
+.total-owed-stat-val{font-family:'IBM Plex Mono',monospace;font-size:.8rem;font-weight:600;color:#111;margin-top:2px;}
+
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="header">
+  <div>
+    <h1>Saliba · Card Statement</h1>
+    <p>Capital One Venture · 2025–2026 · All amounts in USD</p>
+  </div>
+  <div class="card-pill">•••• •••• •••• <span>7114</span></div>
+</div>
+
+<!-- TOTAL OWED -->
+<div class="total-owed-bar" id="total-owed-bar"></div>
+
+<!-- YEAR NAV -->
+<div class="year-nav">
+  <span class="label">Year:</span>
+  <button class="ytab" onclick="setYear(2025,this)">2025</button>
+  <button class="ytab active" onclick="setYear(2026,this)">2026</button>
+</div>
+
+<!-- MONTH NAV -->
+<div class="month-nav" id="month-nav"></div>
+
+<!-- CONTENT -->
+<div id="content"></div>
+
+</div><!-- /page -->
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const RAW = {"2025": [{"date": "12/31/2025", "month": 12, "day": 31, "year": 2025, "name": "Mercedes-Benz Stadium", "category": "Entertainment", "amount": 49.91, "yours": true, "paid": false}, {"date": "12/31/2025", "month": 12, "day": 31, "year": 2025, "name": "Mercedes-Benz Stadium", "category": "Entertainment", "amount": 55.71, "yours": true, "paid": false}, {"date": "12/31/2025", "month": 12, "day": 31, "year": 2025, "name": "Daily Bread", "category": "Entertainment", "amount": 54.45, "yours": true, "paid": false}, {"date": "12/31/2025", "month": 12, "day": 31, "year": 2025, "name": "Shell", "category": "Gas", "amount": 30.17, "yours": false, "paid": false}, {"date": "12/30/2025", "month": 12, "day": 30, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.99, "yours": true, "paid": false}, {"date": "12/27/2025", "month": 12, "day": 27, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": false}, {"date": "12/26/2025", "month": 12, "day": 26, "year": 2025, "name": "ANTHONY'S CAR WASH", "category": "Vehicle", "amount": 50.0, "yours": false, "paid": false}, {"date": "12/26/2025", "month": 12, "day": 26, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 2.99, "yours": true, "paid": false}, {"date": "12/24/2025", "month": 12, "day": 24, "year": 2025, "name": "CAHABA BREWING COMPANY", "category": "Meals", "amount": 10.12, "yours": true, "paid": false}, {"date": "12/19/2025", "month": 12, "day": 19, "year": 2025, "name": "Candlewood Suites", "category": "Travel", "amount": 561.66, "yours": true, "paid": false}, {"date": "12/19/2025", "month": 12, "day": 19, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 16.25, "yours": true, "paid": false}, {"date": "12/17/2025", "month": 12, "day": 17, "year": 2025, "name": "Courtyard Oyster Bar & Grill", "category": "Meals", "amount": 61.15, "yours": true, "paid": false}, {"date": "12/15/2025", "month": 12, "day": 15, "year": 2025, "name": "Publix", "category": "Groceries", "amount": 36.6, "yours": false, "paid": false}, {"date": "12/13/2025", "month": 12, "day": 13, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": false}, {"date": "12/09/2025", "month": 12, "day": 9, "year": 2025, "name": "The Starling Atlanta", "category": "Travel", "amount": 641.78, "yours": false, "paid": false}, {"date": "12/09/2025", "month": 12, "day": 9, "year": 2025, "name": "The Starling Atlanta", "category": "Travel", "amount": 2.0, "yours": false, "paid": false}, {"date": "12/08/2025", "month": 12, "day": 8, "year": 2025, "name": "Politan Row", "category": "Meals", "amount": 2.18, "yours": true, "paid": false}, {"date": "12/08/2025", "month": 12, "day": 8, "year": 2025, "name": "Mora Sushi", "category": "Meals", "amount": 52.82, "yours": true, "paid": false}, {"date": "12/08/2025", "month": 12, "day": 8, "year": 2025, "name": "Mercedes-Benz Stadium", "category": "Entertainment", "amount": 13.07, "yours": true, "paid": false}, {"date": "12/08/2025", "month": 12, "day": 8, "year": 2025, "name": "Mercedes-Benz Stadium", "category": "Entertainment", "amount": 9.8, "yours": true, "paid": false}, {"date": "12/08/2025", "month": 12, "day": 8, "year": 2025, "name": "Puttshack", "category": "Entertainment", "amount": 41.57, "yours": true, "paid": false}, {"date": "12/06/2025", "month": 12, "day": 6, "year": 2025, "name": "Murphy USA", "category": "Gas", "amount": 38.37, "yours": false, "paid": false}, {"date": "12/06/2025", "month": 12, "day": 6, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 24.83, "yours": true, "paid": false}, {"date": "12/03/2025", "month": 12, "day": 3, "year": 2025, "name": "Spotify", "category": "Subscriptions", "amount": 12.95, "yours": true, "paid": false}, {"date": "12/01/2025", "month": 12, "day": 1, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.99, "yours": true, "paid": false}, {"date": "11/29/2025", "month": 11, "day": 29, "year": 2025, "name": "THE TOASTED YOLK CAFE", "category": "Meals", "amount": 55.17, "yours": true, "paid": true}, {"date": "11/26/2025", "month": 11, "day": 26, "year": 2025, "name": "Chevron", "category": "Gas", "amount": 48.55, "yours": false, "paid": true}, {"date": "11/26/2025", "month": 11, "day": 26, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 2.99, "yours": true, "paid": true}, {"date": "11/26/2025", "month": 11, "day": 26, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 54.23, "yours": true, "paid": true}, {"date": "11/22/2025", "month": 11, "day": 22, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "11/17/2025", "month": 11, "day": 17, "year": 2025, "name": "Rag-O-Rama", "category": "Clothing", "amount": 109.44, "yours": true, "paid": true}, {"date": "11/17/2025", "month": 11, "day": 17, "year": 2025, "name": "Embassy Suites", "category": "Travel", "amount": 548.04, "yours": true, "paid": true}, {"date": "11/15/2025", "month": 11, "day": 15, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 16.25, "yours": true, "paid": true}, {"date": "11/12/2025", "month": 11, "day": 12, "year": 2025, "name": "Shelby County", "category": "Taxes", "amount": 38.75, "yours": false, "paid": true}, {"date": "11/11/2025", "month": 11, "day": 11, "year": 2025, "name": "Adaptt Chiropractic", "category": "Medical", "amount": 41.6, "yours": false, "paid": true}, {"date": "11/10/2025", "month": 11, "day": 10, "year": 2025, "name": "Popeye's", "category": "Meals", "amount": 29.12, "yours": false, "paid": true}, {"date": "11/08/2025", "month": 11, "day": 8, "year": 2025, "name": "ALL GOOD BEVERAGE CO", "category": "Meals", "amount": 18.6, "yours": true, "paid": true}, {"date": "11/08/2025", "month": 11, "day": 8, "year": 2025, "name": "ALL GOOD BEVERAGE CO", "category": "Meals", "amount": 19.6, "yours": true, "paid": true}, {"date": "11/08/2025", "month": 11, "day": 8, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 24.83, "yours": true, "paid": true}, {"date": "11/07/2025", "month": 11, "day": 7, "year": 2025, "name": "Chevron", "category": "Gas", "amount": 14.66, "yours": true, "paid": true}, {"date": "11/05/2025", "month": 11, "day": 5, "year": 2025, "name": "BIG WHISKEYS AMERIC", "category": "Meals", "amount": 131.75, "yours": false, "paid": true}, {"date": "11/04/2025", "month": 11, "day": 4, "year": 2025, "name": "Shell", "category": "Gas", "amount": 50.26, "yours": false, "paid": true}, {"date": "11/03/2025", "month": 11, "day": 3, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "11/03/2025", "month": 11, "day": 3, "year": 2025, "name": "Spotify", "category": "Subscriptions", "amount": 12.95, "yours": true, "paid": true}, {"date": "10/30/2025", "month": 10, "day": 30, "year": 2025, "name": "Giuseppe's Cafe", "category": "Meals", "amount": 29.85, "yours": true, "paid": true}, {"date": "10/30/2025", "month": 10, "day": 30, "year": 2025, "name": "Panera Bread", "category": "Meals", "amount": 16.48, "yours": true, "paid": true}, {"date": "10/30/2025", "month": 10, "day": 30, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.99, "yours": true, "paid": true}, {"date": "10/29/2025", "month": 10, "day": 29, "year": 2025, "name": "Southern Dental", "category": "Medical", "amount": 102.5, "yours": false, "paid": true}, {"date": "10/27/2025", "month": 10, "day": 27, "year": 2025, "name": "Taziki's Mediterranean", "category": "Meals", "amount": 27.29, "yours": true, "paid": true}, {"date": "10/27/2025", "month": 10, "day": 27, "year": 2025, "name": "Chevron", "category": "Gas", "amount": 17.37, "yours": true, "paid": true}, {"date": "10/27/2025", "month": 10, "day": 27, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 2.99, "yours": true, "paid": true}, {"date": "10/27/2025", "month": 10, "day": 27, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "10/25/2025", "month": 10, "day": 25, "year": 2025, "name": "ALL GOOD BEVERAGE CO", "category": "Meals", "amount": 23.76, "yours": true, "paid": true}, {"date": "10/23/2025", "month": 10, "day": 23, "year": 2025, "name": "Circle K", "category": "Gas", "amount": 65.47, "yours": true, "paid": true}, {"date": "10/22/2025", "month": 10, "day": 22, "year": 2025, "name": "CAHABA HEIGHTS", "category": "Meals", "amount": 51.85, "yours": true, "paid": true}, {"date": "10/22/2025", "month": 10, "day": 22, "year": 2025, "name": "Walgreens", "category": "Groceries", "amount": 2.49, "yours": false, "paid": true}, {"date": "10/20/2025", "month": 10, "day": 20, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 16.25, "yours": true, "paid": true}, {"date": "10/15/2025", "month": 10, "day": 15, "year": 2025, "name": "Mercedes Benz", "category": "Meals", "amount": 32.67, "yours": true, "paid": true}, {"date": "10/10/2025", "month": 10, "day": 10, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 24.83, "yours": true, "paid": true}, {"date": "10/08/2025", "month": 10, "day": 8, "year": 2025, "name": "Taco Bell", "category": "Meals", "amount": 3.07, "yours": true, "paid": true}, {"date": "10/06/2025", "month": 10, "day": 6, "year": 2025, "name": "Leafly Boba Bar", "category": "Meals", "amount": 9.31, "yours": true, "paid": true}, {"date": "10/06/2025", "month": 10, "day": 6, "year": 2025, "name": "Chevron", "category": "Gas", "amount": 7.17, "yours": true, "paid": true}, {"date": "10/06/2025", "month": 10, "day": 6, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "10/04/2025", "month": 10, "day": 4, "year": 2025, "name": "All Good Collective", "category": "Meals", "amount": 32.8, "yours": true, "paid": true}, {"date": "10/03/2025", "month": 10, "day": 3, "year": 2025, "name": "Spotify", "category": "Subscriptions", "amount": 12.95, "yours": true, "paid": true}, {"date": "09/30/2025", "month": 9, "day": 30, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.99, "yours": true, "paid": true}, {"date": "09/26/2025", "month": 9, "day": 26, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 2.99, "yours": true, "paid": true}, {"date": "09/24/2025", "month": 9, "day": 24, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 37.95, "yours": true, "paid": true}, {"date": "09/22/2025", "month": 9, "day": 22, "year": 2025, "name": "Wal-Mart", "category": "Groceries", "amount": 21.99, "yours": true, "paid": true}, {"date": "09/18/2025", "month": 9, "day": 18, "year": 2025, "name": "Publix", "category": "Groceries", "amount": 33.15, "yours": false, "paid": true}, {"date": "09/17/2025", "month": 9, "day": 17, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 48.79, "yours": true, "paid": true}, {"date": "09/16/2025", "month": 9, "day": 16, "year": 2025, "name": "Coca-Cola Amphitheater", "category": "Entertainment", "amount": 51.41, "yours": true, "paid": true}, {"date": "09/15/2025", "month": 9, "day": 15, "year": 2025, "name": "Coca-Cola Amphitheater", "category": "Entertainment", "amount": 40.43, "yours": true, "paid": true}, {"date": "09/15/2025", "month": 9, "day": 15, "year": 2025, "name": "Iron City", "category": "Entertainment", "amount": 20.12, "yours": true, "paid": true}, {"date": "09/15/2025", "month": 9, "day": 15, "year": 2025, "name": "Iron City", "category": "Entertainment", "amount": 22.12, "yours": true, "paid": true}, {"date": "09/15/2025", "month": 9, "day": 15, "year": 2025, "name": "Iron City", "category": "Entertainment", "amount": 22.12, "yours": true, "paid": true}, {"date": "09/15/2025", "month": 9, "day": 15, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "09/13/2025", "month": 9, "day": 13, "year": 2025, "name": "ALL GOOD BEVERAGE CO", "category": "Meals", "amount": 15.84, "yours": true, "paid": true}, {"date": "09/13/2025", "month": 9, "day": 13, "year": 2025, "name": "ALL GOOD BEVERAGE CO", "category": "Meals", "amount": 14.2, "yours": true, "paid": true}, {"date": "09/13/2025", "month": 9, "day": 13, "year": 2025, "name": "Circle K", "category": "Gas", "amount": 62.07, "yours": false, "paid": true}, {"date": "09/11/2025", "month": 9, "day": 11, "year": 2025, "name": "Alabama Outdoors", "category": "Clothing", "amount": 32.5, "yours": false, "paid": true}, {"date": "09/11/2025", "month": 9, "day": 11, "year": 2025, "name": "RIVERCHASE COOSA MART", "category": "Gas", "amount": 20.04, "yours": false, "paid": true}, {"date": "09/10/2025", "month": 9, "day": 10, "year": 2025, "name": "Ticketmaster", "category": "Entertainment", "amount": 74.25, "yours": true, "paid": true}, {"date": "09/09/2025", "month": 9, "day": 9, "year": 2025, "name": "Krystal", "category": "Meals", "amount": 17.88, "yours": true, "paid": true}, {"date": "09/09/2025", "month": 9, "day": 9, "year": 2025, "name": "Jeni's Ice Creams", "category": "Meals", "amount": 9.52, "yours": true, "paid": true}, {"date": "09/08/2025", "month": 9, "day": 8, "year": 2025, "name": "Fairway Social", "category": "Entertainment", "amount": 49.87, "yours": true, "paid": true}, {"date": "09/08/2025", "month": 9, "day": 8, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 24.83, "yours": true, "paid": true}, {"date": "09/04/2025", "month": 9, "day": 4, "year": 2025, "name": "Oak Mountain Hobbies", "category": "Entertainment", "amount": 37.39, "yours": false, "paid": true}, {"date": "09/04/2025", "month": 9, "day": 4, "year": 2025, "name": "Urban Outfitters", "category": "Clothing", "amount": 74.25, "yours": false, "paid": true}, {"date": "09/03/2025", "month": 9, "day": 3, "year": 2025, "name": "Spotify", "category": "Subscriptions", "amount": 12.95, "yours": true, "paid": true}, {"date": "09/01/2025", "month": 9, "day": 1, "year": 2025, "name": "Publix", "category": "Groceries", "amount": 35.05, "yours": false, "paid": true}, {"date": "09/01/2025", "month": 9, "day": 1, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "08/30/2025", "month": 8, "day": 30, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.99, "yours": true, "paid": true}, {"date": "08/28/2025", "month": 8, "day": 28, "year": 2025, "name": "K & J's Elegant Pastries", "category": "Meals", "amount": 34.65, "yours": true, "paid": true}, {"date": "08/28/2025", "month": 8, "day": 28, "year": 2025, "name": "CAVA", "category": "Meals", "amount": 26.13, "yours": true, "paid": true}, {"date": "08/27/2025", "month": 8, "day": 27, "year": 2025, "name": "Adaptt Chiropractic", "category": "Medical", "amount": 41.6, "yours": false, "paid": true}, {"date": "08/26/2025", "month": 8, "day": 26, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 2.99, "yours": true, "paid": true}, {"date": "08/25/2025", "month": 8, "day": 25, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "08/23/2025", "month": 8, "day": 23, "year": 2025, "name": "Automatic Seafood", "category": "Meals", "amount": 458.03, "yours": true, "paid": true}, {"date": "08/21/2025", "month": 8, "day": 21, "year": 2025, "name": "Chick-Fil-A", "category": "Meals", "amount": 10.71, "yours": true, "paid": true}, {"date": "08/20/2025", "month": 8, "day": 20, "year": 2025, "name": "Panda Express", "category": "Meals", "amount": 14.52, "yours": true, "paid": true}, {"date": "08/18/2025", "month": 8, "day": 18, "year": 2025, "name": "WonderWorks", "category": "Entertainment", "amount": 37.81, "yours": true, "paid": true}, {"date": "08/18/2025", "month": 8, "day": 18, "year": 2025, "name": "Food Mart", "category": "Groceries", "amount": 61.0, "yours": true, "paid": true}, {"date": "08/18/2025", "month": 8, "day": 18, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 16.25, "yours": true, "paid": true}, {"date": "08/13/2025", "month": 8, "day": 13, "year": 2025, "name": "Exxon", "category": "Gas", "amount": 12.81, "yours": true, "paid": true}, {"date": "08/11/2025", "month": 8, "day": 11, "year": 2025, "name": "RIVERCHASE COOSA MART", "category": "Gas", "amount": 10.07, "yours": true, "paid": true}, {"date": "08/09/2025", "month": 8, "day": 9, "year": 2025, "name": "Krystal", "category": "Meals", "amount": 20.9, "yours": true, "paid": true}, {"date": "08/09/2025", "month": 8, "day": 9, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 24.83, "yours": true, "paid": true}, {"date": "08/08/2025", "month": 8, "day": 8, "year": 2025, "name": "Mayfield Dairy Bar", "category": "Meals", "amount": 34.43, "yours": true, "paid": true}, {"date": "08/08/2025", "month": 8, "day": 8, "year": 2025, "name": "Circle K", "category": "Gas", "amount": 25.04, "yours": true, "paid": true}, {"date": "08/07/2025", "month": 8, "day": 7, "year": 2025, "name": "Puckers Sports Grill", "category": "Meals", "amount": 27.89, "yours": true, "paid": true}, {"date": "08/07/2025", "month": 8, "day": 7, "year": 2025, "name": "GATLINBURG PARKWAY", "category": "Travel", "amount": 20.0, "yours": true, "paid": true}, {"date": "08/07/2025", "month": 8, "day": 7, "year": 2025, "name": "The Rhythm Section", "category": "Entertainment", "amount": 93.21, "yours": true, "paid": true}, {"date": "08/06/2025", "month": 8, "day": 6, "year": 2025, "name": "Loco Burro Cantina", "category": "Meals", "amount": 120.25, "yours": true, "paid": true}, {"date": "08/04/2025", "month": 8, "day": 4, "year": 2025, "name": "Airbnb", "category": "Travel", "amount": 546.81, "yours": false, "paid": true}, {"date": "08/04/2025", "month": 8, "day": 4, "year": 2025, "name": "Spotify", "category": "Subscriptions", "amount": 12.95, "yours": true, "paid": true}, {"date": "08/04/2025", "month": 8, "day": 4, "year": 2025, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": true}, {"date": "08/02/2025", "month": 8, "day": 2, "year": 2025, "name": "Wal-Mart", "category": "Groceries", "amount": 47.82, "yours": false, "paid": true}], "2026": [{"date": "02/28/2026", "month": 2, "day": 28, "year": 2026, "name": "The Rougaroux", "category": "Meals", "amount": 186.78, "yours": true, "paid": false}, {"date": "02/26/2026", "month": 2, "day": 26, "year": 2026, "name": "Tailwind EGE", "category": "Meals", "amount": 17.04, "yours": true, "paid": false}, {"date": "02/26/2026", "month": 2, "day": 26, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 2.99, "yours": true, "paid": false}, {"date": "02/24/2026", "month": 2, "day": 24, "year": 2026, "name": "Fuzziwig's Candy", "category": "Meals", "amount": 30.3, "yours": true, "paid": false}, {"date": "02/23/2026", "month": 2, "day": 23, "year": 2026, "name": "Route 6 Cafe", "category": "Meals", "amount": 57.1, "yours": true, "paid": false}, {"date": "02/23/2026", "month": 2, "day": 23, "year": 2026, "name": "Magustos Pizza", "category": "Meals", "amount": 33.0, "yours": true, "paid": false}, {"date": "02/23/2026", "month": 2, "day": 23, "year": 2026, "name": "VAIL T-SHIRT COMPANY", "category": "Clothing", "amount": 101.65, "yours": true, "paid": false}, {"date": "02/23/2026", "month": 2, "day": 23, "year": 2026, "name": "EAGLE'S NEST", "category": "Meals", "amount": 36.75, "yours": true, "paid": false}, {"date": "02/21/2026", "month": 2, "day": 21, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": false}, {"date": "02/17/2026", "month": 2, "day": 17, "year": 2026, "name": "Chick-Fil-A", "category": "Meals", "amount": 32.0, "yours": true, "paid": false}, {"date": "02/17/2026", "month": 2, "day": 17, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 31.44, "yours": true, "paid": false}, {"date": "02/16/2026", "month": 2, "day": 16, "year": 2026, "name": "Dalle Momo", "category": "Meals", "amount": 31.6, "yours": true, "paid": false}, {"date": "02/16/2026", "month": 2, "day": 16, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": false}, {"date": "02/13/2026", "month": 2, "day": 13, "year": 2026, "name": "Adaptt Chiropractic", "category": "Medical", "amount": 41.6, "yours": true, "paid": false}, {"date": "02/12/2026", "month": 2, "day": 12, "year": 2026, "name": "Dot Cards", "category": "Postage", "amount": 56.0, "yours": true, "paid": false}, {"date": "02/10/2026", "month": 2, "day": 10, "year": 2026, "name": "Chevron", "category": "Gas", "amount": 62.47, "yours": false, "paid": false}, {"date": "02/09/2026", "month": 2, "day": 9, "year": 2026, "name": "Panera Bread", "category": "Meals", "amount": 36.39, "yours": true, "paid": false}, {"date": "02/07/2026", "month": 2, "day": 7, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 24.83, "yours": true, "paid": false}, {"date": "02/04/2026", "month": 2, "day": 4, "year": 2026, "name": "Chevron", "category": "Gas", "amount": 57.78, "yours": false, "paid": false}, {"date": "02/03/2026", "month": 2, "day": 3, "year": 2026, "name": "Candlewood Suites", "category": "Travel", "amount": 21.45, "yours": true, "paid": false}, {"date": "02/03/2026", "month": 2, "day": 3, "year": 2026, "name": "Candlewood Suites", "category": "Travel", "amount": 150.0, "yours": true, "paid": false}, {"date": "02/03/2026", "month": 2, "day": 3, "year": 2026, "name": "Candlewood Suites", "category": "Travel", "amount": 100.0, "yours": true, "paid": false}, {"date": "02/03/2026", "month": 2, "day": 3, "year": 2026, "name": "Spotify", "category": "Subscriptions", "amount": 12.95, "yours": true, "paid": false}, {"date": "02/02/2026", "month": 2, "day": 2, "year": 2026, "name": "Circle K", "category": "Gas", "amount": 47.6, "yours": false, "paid": false}, {"date": "01/31/2026", "month": 1, "day": 31, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": false}, {"date": "01/30/2026", "month": 1, "day": 30, "year": 2026, "name": "Chevron", "category": "Gas", "amount": 56.72, "yours": false, "paid": false}, {"date": "01/30/2026", "month": 1, "day": 30, "year": 2026, "name": "Shell", "category": "Gas", "amount": 30.17, "yours": false, "paid": false}, {"date": "01/30/2026", "month": 1, "day": 30, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 10.99, "yours": true, "paid": false}, {"date": "01/26/2026", "month": 1, "day": 26, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 2.99, "yours": true, "paid": false}, {"date": "01/26/2026", "month": 1, "day": 26, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": false}, {"date": "01/19/2026", "month": 1, "day": 19, "year": 2026, "name": "MODI ENTERPRISES", "category": "Clothing", "amount": 62.69, "yours": true, "paid": false}, {"date": "01/19/2026", "month": 1, "day": 19, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 17.98, "yours": true, "paid": false}, {"date": "01/15/2026", "month": 1, "day": 15, "year": 2026, "name": "The Rougaroux", "category": "Meals", "amount": 22.0, "yours": true, "paid": false}, {"date": "01/15/2026", "month": 1, "day": 15, "year": 2026, "name": "The Rougaroux", "category": "Meals", "amount": 52.5, "yours": true, "paid": false}, {"date": "01/14/2026", "month": 1, "day": 14, "year": 2026, "name": "Wal-Mart", "category": "Groceries", "amount": 51.23, "yours": false, "paid": false}, {"date": "01/13/2026", "month": 1, "day": 13, "year": 2026, "name": "QT 737", "category": "Gas", "amount": 48.84, "yours": false, "paid": false}, {"date": "01/10/2026", "month": 1, "day": 10, "year": 2026, "name": "Shelby County", "category": "Taxes", "amount": 440.71, "yours": false, "paid": false}, {"date": "01/09/2026", "month": 1, "day": 9, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 24.83, "yours": true, "paid": false}, {"date": "01/08/2026", "month": 1, "day": 8, "year": 2026, "name": "Mr. Burch Formalwear", "category": "Clothing", "amount": 187.79, "yours": true, "paid": false}, {"date": "01/05/2026", "month": 1, "day": 5, "year": 2026, "name": "Club South", "category": "Meals", "amount": 42.0, "yours": true, "paid": false}, {"date": "01/05/2026", "month": 1, "day": 5, "year": 2026, "name": "Shell", "category": "Gas", "amount": 60.48, "yours": false, "paid": false}, {"date": "01/03/2026", "month": 1, "day": 3, "year": 2026, "name": "Citgo", "category": "Gas", "amount": 43.61, "yours": false, "paid": false}, {"date": "01/03/2026", "month": 1, "day": 3, "year": 2026, "name": "Spotify", "category": "Subscriptions", "amount": 12.95, "yours": true, "paid": false}, {"date": "01/03/2026", "month": 1, "day": 3, "year": 2026, "name": "Apple", "category": "Subscriptions", "amount": 10.84, "yours": true, "paid": false}, {"date": "01/02/2026", "month": 1, "day": 2, "year": 2026, "name": "Mercedes-Benz Stadium", "category": "Entertainment", "amount": 97.81, "yours": true, "paid": false}]};
+
+// ── CONSTANTS ─────────────────────────────────────────────────────────────────
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const CAT_COLORS = {
+  Meals:'#f5c842', Travel:'#4d8ef0', Gas:'#3ecf8e', Groceries:'#9db5ff',
+  Subscriptions:'#a78bfa', Clothing:'#e05c7a', Taxes:'#fb8c4b',
+  Entertainment:'#2dd4bf', Medical:'#67e8f9', Vehicle:'#94a3b8',
+  Postage:'#fb923c', Home:'#a3e635', Other:'#64748b'
+};
+const CAT_BG = {
+  Meals:'#f2f2f2', Travel:'#f2f2f2', Gas:'#f2f2f2', Groceries:'#f2f2f2',
+  Subscriptions:'#f2f2f2', Clothing:'#f2f2f2', Taxes:'#f2f2f2',
+  Entertainment:'#f2f2f2', Medical:'#f2f2f2', Vehicle:'#f2f2f2',
+  Postage:'#f2f2f2', Home:'#f2f2f2', Other:'#f2f2f2'
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let currentYear = 2026;
+let currentMonth = null; // null = year overview
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const fmt = n => '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const pct = (a,b) => b ? Math.round(a/b*100) : 0;
+
+function getMonthData(year, month) {
+  return (RAW[String(year)] || []).filter(t => t.month === month);
+}
+function getYearData(year) {
+  return RAW[String(year)] || [];
+}
+function getAvailableMonths(year) {
+  return [...new Set((RAW[String(year)]||[]).map(t=>t.month))].sort((a,b)=>a-b);
+}
+function calcStats(txns) {
+  const yours = txns.filter(t=>t.yours), dad = txns.filter(t=>!t.yours);
+  const yoursTotal = yours.reduce((s,t)=>s+t.amount,0);
+  const dadTotal = dad.reduce((s,t)=>s+t.amount,0);
+  const yoursPaid = yours.filter(t=>t.paid).reduce((s,t)=>s+t.amount,0);
+  const total = txns.reduce((s,t)=>s+t.amount,0);
+  const owes = yoursTotal - yoursPaid;
+  return {yours,dad,yoursTotal,dadTotal,yoursPaid,total,owes};
+}
+function getCatBreakdown(txns) {
+  const map = {};
+  txns.forEach(t => { map[t.category] = (map[t.category]||0)+t.amount; });
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+}
+
+// ── RENDER MONTH NAV ──────────────────────────────────────────────────────────
+function renderMonthNav() {
+  const avail = getAvailableMonths(currentYear);
+  const nav = document.getElementById('month-nav');
+  let html = `<button class="mtab${currentMonth===null?' active has-data':' has-data'}" onclick="setMonth(null)">Year Overview</button>`;
+  for (let m=1; m<=12; m++) {
+    const has = avail.includes(m);
+    const active = currentMonth===m;
+    html += `<button class="mtab${has?' has-data':'  no-data'}${active?' active':''}" 
+      onclick="${has?`setMonth(${m})`:'void(0)'}">${MONTHS[m-1]}</button>`;
+  }
+  nav.innerHTML = html;
+}
+
+// ── RENDER DONUT ─────────────────────────────────────────────────────────────
+function renderDonut(cats, total, label) {
+  const r=40, cx=50, cy=50, circ=2*Math.PI*r;
+  let offset=0;
+  let slices='', legendItems='';
+  cats.slice(0,8).forEach(([cat,amt]) => {
+    const p = amt/total, dash=p*circ, color=CAT_COLORS[cat]||'#64748b';
+    slices += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="14"
+      stroke-dasharray="${dash.toFixed(2)} ${(circ-dash).toFixed(2)}"
+      stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    legendItems += `<div class="legend-item"><div class="legend-dot" style="background:${color}"></div>
+      <span class="legend-name">${cat}</span><span class="legend-pct">${pct(amt,total)}%</span></div>`;
+    offset += dash;
+  });
+  return `<div class="donut-wrap">
+    <svg width="100" height="100" viewBox="0 0 100 100" style="flex-shrink:0">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#eeeeee" stroke-width="14"/>
+      ${slices}
+      <text x="50" y="47" text-anchor="middle" fill="#111111" font-family="IBM Plex Mono" font-size="8" font-weight="600">${label.toUpperCase()}</text>
+      <text x="50" y="57" text-anchor="middle" fill="#64748b" font-family="IBM Plex Sans" font-size="6">${currentYear}</text>
+    </svg>
+    <div class="donut-legend">${legendItems}</div>
+  </div>`;
+}
+
+// ── RENDER BARS ───────────────────────────────────────────────────────────────
+function renderBars(cats, total) {
+  const top = cats[0]?.[1] || 1;
+  return cats.map(([cat,amt]) => {
+    const color = CAT_COLORS[cat]||'#64748b';
+    const icon = {Meals:'🍔',Travel:'✈️',Gas:'⛽',Groceries:'🛒',Subscriptions:'📱',
+      Clothing:'👕',Taxes:'🏛️',Entertainment:'🎮',Medical:'🩺',Vehicle:'🚗',
+      Postage:'📬',Home:'🏠',Other:'📦'}[cat]||'•';
+    return `<div class="bar-item">
+      <div class="bar-top"><span class="bar-name">${icon} ${cat}</span>
+        <div class="bar-right"><span class="bar-amount">${fmt(amt)}</span><span class="bar-pct">${pct(amt,total)}%</span></div></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct(amt,top)}%;background:${color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER OWED BANNER ────────────────────────────────────────────────────────
+function renderOwedBanner(stats, label) {
+  const owes = Math.max(0, stats.owes);
+  const paid = stats.yoursPaid;
+  let statusClass, statusText;
+  if (owes <= 0 && stats.yoursTotal > 0) { statusClass='paid-full'; statusText='PAID ✓'; }
+  else if (paid > 0) { statusClass='partial'; statusText='PARTIAL'; }
+  else { statusClass='unpaid'; statusText='UNPAID'; }
+
+  return `<div class="owed-banner">
+    <div class="owed-left">
+      <div class="owed-icon">💳</div>
+      <div>
+        <div class="owed-label">Amount You Owe Dad · ${label}</div>
+        <div class="owed-amount">${fmt(owes)}</div>
+      </div>
+    </div>
+    <div class="owed-right">
+      <div class="owed-stat">
+        <div class="owed-stat-label">Your Charges</div>
+        <div class="owed-stat-val" style="color:#111">${fmt(stats.yoursTotal)}</div>
+      </div>
+      <div class="owed-stat">
+        <div class="owed-stat-label">Dad's Charges</div>
+        <div class="owed-stat-val" style="color:#111">${fmt(stats.dadTotal)}</div>
+      </div>
+      <div class="owed-stat">
+        <div class="owed-stat-label">Paid Back</div>
+        <div class="owed-stat-val" style="color:#111">${fmt(paid)}</div>
+      </div>
+      <div class="owed-stat">
+        <div class="owed-stat-label">Status</div>
+        <div style="margin-top:3px"><span class="status-pill ${statusClass}">${statusText}</span></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── RENDER TX TABLE ─────────────────────────────────────────────────────────
+function renderTxTable(txns, title) {
+  const rows = txns.map(t => {
+    const color = CAT_COLORS[t.category]||'#64748b', bg = CAT_BG[t.category]||'#1a1a1a';
+    const respBadge = t.yours ? `<span class="resp-badge resp-yours">YOURS</span>` : `<span class="resp-badge resp-dad">DAD</span>`;
+    const paidBadge = !t.yours ? `<span class="na-badge">—</span>` : t.paid ? `<span class="paid-badge paid-yes">PAID ✓</span>` : `<span class="paid-badge paid-no">OWED</span>`;
+    const amtColor = t.yours ? '#111' : '#aaa';
+    const d = t.date.split('/');
+    const dateStr = `${MONTHS[parseInt(d[0])-1]} ${parseInt(d[1])}`;
+    return `<div class="tx-row">
+      <div class="tx-row-left">
+        <div class="tx-row-date">${dateStr}</div>
+        <div class="tx-row-name">${t.name}</div>
+        <div class="tx-row-badges">
+          <span class="cat-tag" style="background:${bg};color:${color}">${t.category}</span>
+          ${respBadge}${paidBadge}
+        </div>
+      </div>
+      <div class="tx-row-amount" style="color:${amtColor}">${fmt(t.amount)}</div>
+    </div>`;
+  }).join('');
+
+  const legend = `<div class="legend-key">
+    <div class="legend-key-item"><span class="resp-badge resp-yours">YOURS</span>&nbsp;Yours to pay</div>
+    <div class="legend-key-item"><span class="resp-badge resp-dad">DAD</span>&nbsp;Dad pays</div>
+    <div class="legend-key-item"><span class="paid-badge paid-yes">PAID ✓</span>&nbsp;Paid back</div>
+    <div class="legend-key-item"><span class="paid-badge paid-no">OWED</span>&nbsp;Still owed</div>
+  </div>`;
+
+  return `<div class="tx-card">
+    <div class="card-title">${title}</div>
+    ${legend}
+    <div class="tx-list">${rows}</div>
+  </div>`;
+}
+
+// ── RENDER SUMMARY ────────────────────────────────────────────────────────────
+function renderSummary(txns, label, isYear, currentMonth, currentYear) {
+  const yours = txns.filter(t=>t.yours);
+  const dad = txns.filter(t=>!t.yours);
+  const yoursTotal = yours.reduce((s,t)=>s+t.amount,0);
+  const dadTotal = dad.reduce((s,t)=>s+t.amount,0);
+  const total = yoursTotal + dadTotal;
+  const items = [];
+
+  const catMap = {};
+  yours.forEach(t => { catMap[t.category] = (catMap[t.category]||0)+t.amount; });
+  const cats = Object.entries(catMap).sort((a,b)=>b[1]-a[1]);
+
+  // Pull comparison data for month-over-month context
+  let prevMonthTxns = [], prevCatMap = {}, prevYoursTotal = 0;
+  if (!isYear && currentMonth && currentYear) {
+    const prevM = currentMonth === 1 ? 12 : currentMonth - 1;
+    const prevY = currentMonth === 1 ? currentYear - 1 : currentYear;
+    prevMonthTxns = getMonthData(prevY, prevM).filter(t=>t.yours);
+    prevMonthTxns.forEach(t => { prevCatMap[t.category] = (prevCatMap[t.category]||0)+t.amount; });
+    prevYoursTotal = prevMonthTxns.reduce((s,t)=>s+t.amount,0);
+  }
+
+  const mealTotal = catMap['Meals']||0;
+  const mealCount = yours.filter(t=>t.category==='Meals').length;
+  const subTotal = catMap['Subscriptions']||0;
+  const subCount = yours.filter(t=>t.category==='Subscriptions').length;
+  const entTotal = catMap['Entertainment']||0;
+  const clothTotal = catMap['Clothing']||0;
+  const travelTotal = catMap['Travel']||0;
+  const yoursPaid = yours.filter(t=>t.paid).reduce((s,t)=>s+t.amount,0);
+  const owes = yoursTotal - yoursPaid;
+
+  // ── MONTH-OVER-MONTH TOTAL ──
+  if (!isYear && prevYoursTotal > 0) {
+    const diff = yoursTotal - prevYoursTotal;
+    const diffPct = Math.round(Math.abs(diff)/prevYoursTotal*100);
+    const prevMonthName = MONTHS[(currentMonth===1?11:currentMonth-2)];
+    if (diff > 50) {
+      items.push({type:'warn', icon:'📈',
+        text:`You spent <strong>${fmt(diff)} more</strong> than last month (${prevMonthName} was ${fmt(prevYoursTotal)}) — that's a <strong>${diffPct}% increase</strong>. What changed?`});
+    } else if (diff < -50) {
+      items.push({type:'good', icon:'📉',
+        text:`Down <strong>${fmt(Math.abs(diff))}</strong> from ${prevMonthName}'s ${fmt(prevYoursTotal)} — a <strong>${diffPct}% drop</strong>. Good month.`});
+    } else {
+      items.push({type:'info', icon:'➡️',
+        text:`Pretty consistent with last month — ${fmt(prevYoursTotal)} in ${prevMonthName} vs <strong>${fmt(yoursTotal)}</strong> this month.`});
+    }
+  }
+
+  // ── BIGGEST SINGLE CHARGE ──
+  if (yours.length) {
+    const biggest = yours.reduce((a,b)=>a.amount>b.amount?a:b);
+    const biggestPct = Math.round(biggest.amount/yoursTotal*100);
+    let bigNote = `Biggest single charge: <strong>${fmt(biggest.amount)}</strong> at <strong>${biggest.name}</strong>`;
+    if (biggestPct > 40) bigNote += ` — that's <strong>${biggestPct}%</strong> of your entire month right there.`;
+    else bigNote += ` on ${biggest.date}.`;
+    items.push({type:'flag', icon:'💳', text:bigNote});
+  }
+
+  // ── MEALS ──
+  if (mealTotal > 0) {
+    const avgMeal = mealTotal/mealCount;
+    const prevMealTotal = prevCatMap['Meals']||0;
+    let mealNote = '';
+    if (prevMealTotal > 0 && !isYear) {
+      const mealDiff = mealTotal - prevMealTotal;
+      if (mealDiff > 30) mealNote = `Meals jumped <strong>${fmt(mealDiff)}</strong> from last month. <strong>${mealCount} restaurant visits</strong> averaging <strong>${fmt(avgMeal)}</strong> each — those add up fast.`;
+      else if (mealDiff < -30) mealNote = `You actually cut back on eating out this month — <strong>${fmt(mealTotal)}</strong> vs ${fmt(prevMealTotal)} last month. Noticed.`;
+      else mealNote = `<strong>${mealCount} restaurant visits</strong> totaling <strong>${fmt(mealTotal)}</strong>, averaging ${fmt(avgMeal)} each.`;
+    } else {
+      mealNote = `<strong>${mealCount} restaurant visits</strong> totaling <strong>${fmt(mealTotal)}</strong>`;
+      if (avgMeal > 80) mealNote += ` — averaging <strong>${fmt(avgMeal)}</strong> per meal. That's a lot for one person.`;
+      else if (avgMeal > 50) mealNote += `, averaging <strong>${fmt(avgMeal)}</strong> per outing.`;
+      else mealNote += `.`;
+    }
+    items.push({type:'info', icon:'🍔', text:mealNote});
+  }
+
+  // ── TRAVEL (only if significant) ──
+  if (travelTotal > 100) {
+    const prevTravel = prevCatMap['Travel']||0;
+    let travNote = `Travel came in at <strong>${fmt(travelTotal)}</strong> this ${isYear?'year':'month'}.`;
+    if (prevTravel === 0 && !isYear) travNote += ` No travel last month — this was a trip month.`;
+    else if (travelTotal > 400) travNote += ` That's a big one — hope it was worth it.`;
+    items.push({type:'info', icon:'✈️', text:travNote});
+  }
+
+  // ── SUBSCRIPTIONS ──
+  if (subTotal > 0) {
+    const prevSubTotal = prevCatMap['Subscriptions']||0;
+    let subNote = `<strong>${subCount} subscription charges</strong> totaling <strong>${fmt(subTotal)}</strong>.`;
+    if (subTotal > 100) subNote += ` Over $100/month in subscriptions — worth auditing what you actually use.`;
+    else if (prevSubTotal > 0 && Math.abs(subTotal-prevSubTotal) > 20 && !isYear) {
+      subNote += ` That's ${subTotal > prevSubTotal ? fmt(subTotal-prevSubTotal)+' more' : fmt(prevSubTotal-subTotal)+' less'} than last month — did something change?`;
+    }
+    items.push({type:'info', icon:'📱', text:subNote});
+  }
+
+  // ── CLOTHING ──
+  if (clothTotal > 0) {
+    const prevCloth = prevCatMap['Clothing']||0;
+    let clothNote = `<strong>${fmt(clothTotal)}</strong> on clothing`;
+    if (prevCloth > 0 && !isYear) clothNote += ` — you also spent ${fmt(prevCloth)} on clothes last month. Two months in a row.`;
+    else if (clothTotal > 150) clothNote += ` — that's a significant wardrobe investment.`;
+    else clothNote += `.`;
+    items.push({type:'flag', icon:'👕', text:clothNote});
+  }
+
+  // ── ENTERTAINMENT ──
+  if (entTotal > 50) {
+    const prevEnt = prevCatMap['Entertainment']||0;
+    let entNote = `<strong>${fmt(entTotal)}</strong> on entertainment`;
+    if (prevEnt > 50 && !isYear) entNote += ` — and ${fmt(prevEnt)} last month too. Consistent spender on fun.`;
+    else if (entTotal > 150) entNote += ` — that's a real chunk. What was that for?`;
+    else entNote += `.`;
+    items.push({type:'info', icon:'🎭', text:entNote});
+  }
+
+  // ── OUTSTANDING BALANCE ──
+  if (owes > 500) {
+    items.push({type:'warn', icon:'🔴',
+      text:`You owe <strong>${fmt(owes)}</strong> just from this ${isYear?'year':'month'} alone. That's not a small number — let's talk about getting this settled.`});
+  } else if (owes > 0) {
+    items.push({type:'warn', icon:'⚠️',
+      text:`Still <strong>${fmt(owes)}</strong> outstanding from this ${isYear?'year':'month'}. Don't let it pile up.`});
+  } else if (yoursTotal > 0) {
+    items.push({type:'good', icon:'✅',
+      text:`All paid up for ${isYear?'this year':'this month'}. That's the right move — keep it up.`});
+  }
+
+  const rows = items.map(i =>
+    `<div class="summary-item ${i.type}">
+      <div class="summary-item-icon">${i.icon}</div>
+      <div class="summary-item-text">${i.text}</div>
+    </div>`
+  ).join('');
+
+  return `<div class="summary-card">
+    <div class="summary-header">
+      <span class="summary-icon">📊</span>
+      <span class="summary-title">The Rundown · ${label}</span>
+    </div>
+    <div class="summary-items">${rows}</div>
+  </div>`;
+}
+
+// ── RENDER MONTH VIEW ─────────────────────────────────────────────────────────
+function renderMonthView(year, month) {
+  const txns = getMonthData(year, month);
+  if (!txns.length) return `<div class="empty">No data for this month.</div>`;
+  const stats = calcStats(txns);
+  const cats = getCatBreakdown(txns.filter(t=>t.yours));
+  const yoursCats = getCatBreakdown(txns.filter(t=>t.yours));
+  const mLabel = MONTHS[month-1];
+  const yoursPct = pct(stats.yoursTotal, stats.total);
+
+  return `
+    ${renderOwedBanner(stats, `${mLabel} ${year}`)}
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Spent</div>
+        <div class="stat-value" style="color:#111">${fmt(stats.total)}</div>
+        <div class="stat-sub">${txns.length} transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Your Charges</div>
+        <div class="stat-value" style="color:#111">${fmt(stats.yoursTotal)}</div>
+        <div class="stat-sub">${stats.yours.length} transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Dad's Charges</div>
+        <div class="stat-value" style="color:#111">${fmt(stats.dadTotal)}</div>
+        <div class="stat-sub">${stats.dad.length} transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Still Owed</div>
+        <div class="stat-value" style="color:#2563eb">${fmt(Math.max(0,stats.owes))}</div>
+        <div class="stat-sub">${stats.owes<=0?'All settled!':'to dad'}</div>
+      </div>
+    </div>
+    ${renderSummary(txns, `${mLabel} ${year}`, false, month, year)}
+    <div class="split-card">
+      <div class="card-title">Who Pays What · ${mLabel}</div>
+      <div class="split-row">
+        <div class="split-half">
+          <div class="split-half-label" style="color:#555">Your Charges</div>
+          <div class="split-half-amount" style="color:#111">${fmt(stats.yoursTotal)}</div>
+          <div class="split-half-sub">${yoursPct}% of total · ${stats.yours.length} txns</div>
+        </div>
+        <div class="split-half">
+          <div class="split-half-label" style="color:#555">Dad's Charges</div>
+          <div class="split-half-amount" style="color:#111">${fmt(stats.dadTotal)}</div>
+          <div class="split-half-sub">${100-yoursPct}% of total · ${stats.dad.length} txns</div>
+        </div>
+      </div>
+      <div class="split-bar-wrap">
+        <div class="split-bar-track">
+          <div class="split-bar-his" style="width:${yoursPct}%"></div>
+          <div class="split-bar-dad" style="flex:1"></div>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Your Spending — Category Split</div>
+        ${yoursCats.length ? renderDonut(yoursCats, stats.yoursTotal, mLabel) : '<div class="empty">No data</div>'}
+      </div>
+      <div class="card">
+        <div class="card-title">Your Spending — Amounts</div>
+        <div class="bar-list">${renderBars(yoursCats, stats.yoursTotal)}</div>
+      </div>
+    </div>
+    ${renderTxTable(txns, `All Transactions · ${mLabel} ${year}`)}
+  `;
+}
+
+// ── RENDER YEAR OVERVIEW ──────────────────────────────────────────────────────
+function renderYearOverview(year) {
+  const all = getYearData(year);
+  if (!all.length) return `<div class="empty">No data for ${year}.</div>`;
+  const avail = getAvailableMonths(year);
+  const stats = calcStats(all);
+  const yoursCats = getCatBreakdown(all.filter(t=>t.yours));
+
+  // Monthly tiles
+  let tiles = '';
+  for (let m=1; m<=12; m++) {
+    const txns = getMonthData(year, m);
+    if (!txns.length) {
+      tiles += `<div class="month-tile no-data-tile"><div class="tile-month">${MONTHS[m-1]}</div><div class="tile-amount" style="color:var(--muted2)">—</div></div>`;
+    } else {
+      const ms = calcStats(txns);
+      const owes = Math.max(0, ms.owes);
+      let badgeClass, badgeText;
+      if (owes<=0 && ms.yoursTotal>0) { badgeClass='tile-paid'; badgeText='Paid ✓'; }
+      else if (ms.yoursPaid>0) { badgeClass='tile-partial'; badgeText='Partial'; }
+      else { badgeClass='tile-unpaid'; badgeText='Unpaid'; }
+      tiles += `<div class="month-tile" onclick="setMonth(${m})">
+        <div class="tile-month">${MONTHS[m-1]}</div>
+        <div class="tile-amount">${fmt(ms.yoursTotal)}</div>
+        <div class="tile-sub">${txns.length} txns · ${fmt(ms.dadTotal)} dad</div>
+        <div class="tile-badge ${badgeClass}">${badgeText}</div>
+      </div>`;
+    }
+  }
+
+  // Year totals bar chart by month (his only)
+  const monthAmts = avail.map(m => ({m, amt: calcStats(getMonthData(year,m)).yoursTotal}));
+  const maxAmt = Math.max(...monthAmts.map(x=>x.amt), 1);
+  const monthBars = monthAmts.map(({m,amt}) =>
+    `<div class="bar-item">
+      <div class="bar-top"><span class="bar-name">${MONTHS[m-1]}</span>
+        <div class="bar-right"><span class="bar-amount">${fmt(amt)}</span></div></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct(amt,maxAmt)}%;background:var(--accent)"></div></div>
+    </div>`
+  ).join('');
+
+  return `
+    ${renderOwedBanner(stats, `${year} Year Total`)}
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Year Total (Yours)</div>
+        <div class="stat-value" style="color:#111">${fmt(stats.yoursTotal)}</div>
+        <div class="stat-sub">${avail.length} months tracked</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Year Total (Dad)</div>
+        <div class="stat-value" style="color:#111">${fmt(stats.dadTotal)}</div>
+        <div class="stat-sub">${stats.dad.length} transactions</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Paid Back</div>
+        <div class="stat-value" style="color:#111">${fmt(stats.yoursPaid)}</div>
+        <div class="stat-sub">of ${fmt(stats.yoursTotal)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Still Owed</div>
+        <div class="stat-value" style="color:#111">${fmt(Math.max(0,stats.owes))}</div>
+        <div class="stat-sub">${stats.owes<=0?'All clear!':'remaining'}</div>
+      </div>
+    </div>
+    ${renderSummary(all, `${year} Year`, true, null, year)}
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">Monthly Overview — Click a month to see details</div>
+      <div class="monthly-grid">${tiles}</div>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-title">Your Category Split</div>
+        ${renderDonut(yoursCats, stats.yoursTotal, year.toString())}
+      </div>
+      <div class="card">
+        <div class="card-title">Your Monthly Spending</div>
+        <div class="bar-list">${monthBars}</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:10px">
+      <div class="card-title">Your Category Totals</div>
+      <div class="bar-list">${renderBars(yoursCats, stats.yoursTotal)}</div>
+    </div>
+  `;
+}
+
+
+// ── RENDER TOTAL OWED (ALL TIME) ─────────────────────────────────────────────
+function renderTotalOwed() {
+  let allTxns = [];
+  Object.values(RAW).forEach(yr => allTxns = allTxns.concat(yr));
+  const yours = allTxns.filter(t => t.yours);
+  const yoursTotal = yours.reduce((s,t) => s+t.amount, 0);
+  const yoursPaid = yours.filter(t => t.paid).reduce((s,t) => s+t.amount, 0);
+  const totalOwed = Math.max(0, yoursTotal - yoursPaid);
+  const totalCharged = allTxns.reduce((s,t) => s+t.amount, 0);
+  const years = Object.keys(RAW).sort();
+
+  document.getElementById('total-owed-bar').innerHTML = `
+    <div class="total-owed-bar-left">
+      <div>
+        <div class="total-owed-bar-label">Total Owed to Dad · All Time</div>
+        <div class="total-owed-bar-amount">${fmt(totalOwed)}</div>
+      </div>
+    </div>
+
+  `;
+}
+
+// ── MAIN RENDER ───────────────────────────────────────────────────────────────
+function render() {
+  renderMonthNav();
+  renderTotalOwed();
+  const content = document.getElementById('content');
+  if (currentMonth === null) {
+    content.innerHTML = renderYearOverview(currentYear);
+  } else {
+    content.innerHTML = renderMonthView(currentYear, currentMonth);
+  }
+}
+
+function setYear(y, el) {
+  currentYear = y;
+  currentMonth = null;
+  document.querySelectorAll('.ytab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function setMonth(m) {
+  currentMonth = m;
+  render();
+  // Scroll to top of content
+
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
